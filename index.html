@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Glow Drift</title>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.min.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #07070a; overflow: hidden; }
+    canvas { display: block; }
+    .hint {
+      position: fixed; left: 14px; bottom: 12px;
+      font: 12px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: rgba(255,255,255,.65); letter-spacing: .2px;
+      user-select: none; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="hint">drag/touch: attract · click/tap: ripple · press R: reset</div>
+  <script src="./sketch.js"></script>
+</body>
+</html>
