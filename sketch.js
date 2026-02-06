@@ -1,11 +1,13 @@
 let particles = [];
 let ripples = [];
 const N = 220;
+let currentColor;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   initParticles();
   noStroke();
+  currentColor = randomPastel();
 }
 
 function initParticles() {
@@ -24,7 +26,7 @@ function initParticles() {
 }
 
 function draw() {
-  background(7, 7, 10, 28);
+  background(7, 7, 10, 10);
 
   const mx = touches.length ? touches[0].x : mouseX;
   const my = touches.length ? touches[0].y : mouseY;
@@ -80,10 +82,10 @@ function draw() {
     if (p.y > height + 10) p.y = -10;
 
     const glow = map(sp, 0, maxSp, 70, 220);
-    fill(255, glow);
+    fill(red(currentColor), green(currentColor), blue(currentColor), glow);
     circle(p.x, p.y, p.r * 2.2);
 
-    fill(255, 35);
+    fill(red(currentColor), green(currentColor), blue(currentColor), 35);
     circle(p.x, p.y, p.r * 6.0);
   }
 
@@ -96,10 +98,12 @@ function draw() {
 }
 
 function mousePressed() {
+  currentColor = randomPastel();
   addRipple(mouseX, mouseY);
 }
 
 function touchStarted() {
+  currentColor = randomPastel();
   if (touches.length) addRipple(touches[0].x, touches[0].y);
   return false;
 }
@@ -120,3 +124,11 @@ function keyPressed() {
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
+
+function randomPastel() {
+  const r = random(180, 255);
+  const g = random(180, 255);
+  const b = random(180, 255);
+  return color(r, g, b);
+}
+
