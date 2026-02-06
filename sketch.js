@@ -2,7 +2,8 @@ let particles = [];
 let ripples = [];
 let sparks = [];
 
-const N = 120;
+const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const N = IS_MOBILE ? 60 : 120;
 
 let currentColor;
 let targetColor;
@@ -13,6 +14,7 @@ let clickX = 0;
 let clickY = 0;
 
 function setup() {
+  frameRate(30);
   pixelDensity(1);
   createCanvas(windowWidth, windowHeight);
   initParticles();
