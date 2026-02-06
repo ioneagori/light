@@ -33,16 +33,27 @@ function initParticles() {
   sparks = [];
 }
 
+// ✅ 모바일/브라우저마다 touches가 undefined일 수 있어서 안전 체크
+function getPointer() {
+  const hasTouch = (typeof touches !== "undefined") && touches && touches.length > 0;
+  const x = hasTouch ? touches[0].x : mouseX;
+  const y = hasTouch ? touches[0].y : mouseY;
+  const down = hasTouch || mouseIsPressed;
+  return { x, y, down, hasTouch };
+}
+
 function draw() {
   background(7, 7, 10, 18);
 
-  // ✅ 색 변화 더 빠르게
+  // 색 변화 더 빠르게
   currentColor = lerpColor(currentColor, targetColor, 0.12);
 
-  const mx = touches.length ? touches[0].x : mouseX;
-  const my = touches.length ? touches[0].y : mouseY;
+  const pointer = getPointer();
+  const mx = pointer.x;
+  const my = pointer.y;
+  const dragging = pointer.down;
 
-  // ripple (속도 ↑)
+  // ripple
   for (let i = ripples.length - 1; i >= 0; i--) {
     const rp = ripples[i];
     rp.radius += rp.speed;
@@ -56,7 +67,7 @@ function draw() {
     if (rp.alpha < 2) ripples.splice(i, 1);
   }
 
-  // sparks (속도 ↑)
+  // sparks
   noStroke();
   for (let i = sparks.length - 1; i >= 0; i--) {
     const s = sparks[i];
@@ -88,13 +99,11 @@ function draw() {
     p.vx += wind * 0.02;
     p.vy += -wind * 0.01;
 
-    // ✅ 끌림 반응 더 빠르게
-    const dragging = touches.length > 0 || mouseIsPressed;
     if (dragging) {
       const dx = mx - p.x;
       const dy = my - p.y;
       const d2 = dx * dx + dy * dy;
-      const pull = 2600 / (d2 + 900); // ← 여기 핵심
+      const pull = 2600 / (d2 + 900);
       p.vx += dx * pull * 0.015;
       p.vy += dy * pull * 0.015;
     }
@@ -127,7 +136,7 @@ function draw() {
   }
 
   // 중심 가이드
-  if (touches.length > 0 || mouseIsPressed) {
+  if (dragging) {
     noFill();
     stroke(255, 26);
     strokeWeight(1.2);
@@ -143,7 +152,7 @@ function mousePressed() {
 
 function touchStarted() {
   targetColor = randomPastel();
-  if (touches.length) {
+  if (typeof touches !== "undefined" && touches && touches.length) {
     addRipple(touches[0].x, touches[0].y);
     addSparks(touches[0].x, touches[0].y);
   }
@@ -154,7 +163,7 @@ function addRipple(x, y) {
   ripples.push({
     x, y,
     radius: 0,
-    speed: 5.0, // ✅ 파동 속도 ↑
+    speed: 5.0,
     alpha: 95
   });
 }
@@ -163,7 +172,7 @@ function addSparks(x, y) {
   const count = 12;
   for (let i = 0; i < count; i++) {
     const a = random(TWO_PI);
-    const sp = random(1.2, 3.2); // ✅ 스파클 속도 ↑
+    const sp = random(1.2, 3.2);
     sparks.push({
       x: x,
       y: y,
