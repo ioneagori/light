@@ -34,83 +34,76 @@ function initParticles() {
 }
 
 function draw() {
-  // 잔상 (숫자 ↑ = 더 빨리 지워져 가벼워짐 / 숫자 ↓ = 더 길게 남음)
   background(7, 7, 10, 18);
 
-  // ✅ 색이 서서히 바뀌게(크로스페이드)
-  currentColor = lerpColor(currentColor, targetColor, 0.06);
+  // ✅ 색 변화 더 빠르게
+  currentColor = lerpColor(currentColor, targetColor, 0.12);
 
   const mx = touches.length ? touches[0].x : mouseX;
   const my = touches.length ? touches[0].y : mouseY;
 
-  // ripple
+  // ripple (속도 ↑)
   for (let i = ripples.length - 1; i >= 0; i--) {
     const rp = ripples[i];
     rp.radius += rp.speed;
-    rp.alpha *= 0.96;
+    rp.alpha *= 0.94;
 
     noFill();
     stroke(255, rp.alpha);
-    strokeWeight(1.2);
+    strokeWeight(1.3);
     circle(rp.x, rp.y, rp.radius * 2);
 
     if (rp.alpha < 2) ripples.splice(i, 1);
   }
 
-  // ✅ 스파클(별가루)
+  // sparks (속도 ↑)
   noStroke();
   for (let i = sparks.length - 1; i >= 0; i--) {
     const s = sparks[i];
-    s.vx *= 0.98;
-    s.vy *= 0.98;
-    s.vy += 0.01; // 아주 약한 중력 느낌
+    s.vx *= 0.96;
+    s.vy *= 0.96;
+    s.vy += 0.02;
     s.x += s.vx;
     s.y += s.vy;
 
-    s.life *= 0.92;
+    s.life *= 0.90;
 
-    // 아주 작은 반짝 점
     fill(255, 255 * s.life);
     circle(s.x, s.y, s.size);
 
-    // 미세 글로우
-    fill(255, 35 * s.life);
+    fill(255, 30 * s.life);
     circle(s.x, s.y, s.size * 3.5);
 
     if (s.life < 0.05) sparks.splice(i, 1);
   }
 
-  // particles
-  noStroke();
-
   const cr = red(currentColor);
   const cg = green(currentColor);
   const cb = blue(currentColor);
 
+  // particles
   for (const p of particles) {
-    // 미세한 바람
     const n = noise(p.seed, frameCount * 0.004);
     const wind = map(n, 0, 1, -0.25, 0.25);
     p.vx += wind * 0.02;
     p.vy += -wind * 0.01;
 
-    // 끌어당김
+    // ✅ 끌림 반응 더 빠르게
     const dragging = touches.length > 0 || mouseIsPressed;
     if (dragging) {
       const dx = mx - p.x;
       const dy = my - p.y;
       const d2 = dx * dx + dy * dy;
-      const pull = 1500 / (d2 + 1200);
-      p.vx += dx * pull * 0.01;
-      p.vy += dy * pull * 0.01;
+      const pull = 2600 / (d2 + 900); // ← 여기 핵심
+      p.vx += dx * pull * 0.015;
+      p.vy += dy * pull * 0.015;
     }
 
-    // 마찰
-    p.vx *= 0.985;
-    p.vy *= 0.985;
+    p.vx *= 0.98;
+    p.vy *= 0.98;
 
     const sp = sqrt(p.vx * p.vx + p.vy * p.vy);
-    const maxSp = 2.2;
+    const maxSp = 2.6;
     if (sp > maxSp) {
       p.vx = (p.vx / sp) * maxSp;
       p.vy = (p.vy / sp) * maxSp;
@@ -119,34 +112,30 @@ function draw() {
     p.x += p.vx;
     p.y += p.vy;
 
-    // 워프
     if (p.x < -10) p.x = width + 10;
     if (p.x > width + 10) p.x = -10;
     if (p.y < -10) p.y = height + 10;
     if (p.y > height + 10) p.y = -10;
 
-    const glow = map(sp, 0, maxSp, 80, 220);
+    const glow = map(sp, 0, maxSp, 90, 230);
 
-    // 중심
     fill(cr, cg, cb, glow);
-    circle(p.x, p.y, p.r * 4.0);
+    circle(p.x, p.y, p.r * 4.2);
 
-    // 퍼지는 빛(블러 아님: 큰 원)
-    fill(cr, cg, cb, 32);
-    circle(p.x, p.y, p.r * 10.0);
+    fill(cr, cg, cb, 34);
+    circle(p.x, p.y, p.r * 10.5);
   }
 
   // 중심 가이드
   if (touches.length > 0 || mouseIsPressed) {
     noFill();
-    stroke(255, 22);
-    strokeWeight(1);
-    circle(mx, my, 80);
+    stroke(255, 26);
+    strokeWeight(1.2);
+    circle(mx, my, 85);
   }
 }
 
 function mousePressed() {
-  // 클릭하면 색 목표가 바뀌고(부드럽게 따라감), 파동+별가루
   targetColor = randomPastel();
   addRipple(mouseX, mouseY);
   addSparks(mouseX, mouseY);
@@ -165,20 +154,19 @@ function addRipple(x, y) {
   ripples.push({
     x, y,
     radius: 0,
-    speed: 3.6,
-    alpha: 90
+    speed: 5.0, // ✅ 파동 속도 ↑
+    alpha: 95
   });
 }
 
 function addSparks(x, y) {
-  // 성능 안전: 10~14개 정도
   const count = 12;
   for (let i = 0; i < count; i++) {
     const a = random(TWO_PI);
-    const sp = random(0.4, 1.8);
+    const sp = random(1.2, 3.2); // ✅ 스파클 속도 ↑
     sparks.push({
-      x: x + random(-2, 2),
-      y: y + random(-2, 2),
+      x: x,
+      y: y,
       vx: cos(a) * sp,
       vy: sin(a) * sp,
       life: random(0.7, 1.0),
