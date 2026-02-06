@@ -2,19 +2,12 @@ let particles = [];
 let ripples = [];
 let sparks = [];
 
-const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-const N = IS_MOBILE ? 60 : 120;
+const N = 120;
 
 let currentColor;
 let targetColor;
 
-// 클릭 후 끌림 유지
-let clickAttractFrames = 0;
-let clickX = 0;
-let clickY = 0;
-
 function setup() {
-  frameRate(30);
   pixelDensity(1);
   createCanvas(windowWidth, windowHeight);
   initParticles();
@@ -27,14 +20,11 @@ function setup() {
 function initParticles() {
   particles = [];
   for (let i = 0; i < N; i++) {
-    // ✅ 시작 속도부터 더 빠르게
-    const a = random(TWO_PI);
-    const sp = random(0.8, 2.4);
     particles.push({
       x: random(width),
       y: random(height),
-      vx: cos(a) * sp,
-      vy: sin(a) * sp,
+      vx: random(-0.6, 0.6),
+      vy: random(-0.6, 0.6),
       r: random(1.2, 2.6),
       seed: random(1000)
     });
@@ -46,23 +36,17 @@ function initParticles() {
 function draw() {
   background(7, 7, 10, 18);
 
-  // 색 변화 더 빠르게
-  currentColor = lerpColor(currentColor, targetColor, 0.16);
+  // ✅ 색 변화 더 빠르게
+  currentColor = lerpColor(currentColor, targetColor, 0.12);
 
   const mx = touches.length ? touches[0].x : mouseX;
   const my = touches.length ? touches[0].y : mouseY;
 
-  if (clickAttractFrames > 0) clickAttractFrames--;
-
-  const hasClickAttractor = clickAttractFrames > 0;
-  const ax = hasClickAttractor ? clickX : mx;
-  const ay = hasClickAttractor ? clickY : my;
-
-  // ripple
+  // ripple (속도 ↑)
   for (let i = ripples.length - 1; i >= 0; i--) {
     const rp = ripples[i];
     rp.radius += rp.speed;
-    rp.alpha *= 0.93;
+    rp.alpha *= 0.94;
 
     noFill();
     stroke(255, rp.alpha);
@@ -72,22 +56,22 @@ function draw() {
     if (rp.alpha < 2) ripples.splice(i, 1);
   }
 
-  // sparks
+  // sparks (속도 ↑)
   noStroke();
   for (let i = sparks.length - 1; i >= 0; i--) {
     const s = sparks[i];
-    s.vx *= 0.95;
-    s.vy *= 0.95;
+    s.vx *= 0.96;
+    s.vy *= 0.96;
     s.vy += 0.02;
     s.x += s.vx;
     s.y += s.vy;
 
-    s.life *= 0.89;
+    s.life *= 0.90;
 
     fill(255, 255 * s.life);
     circle(s.x, s.y, s.size);
 
-    fill(255, 28 * s.life);
+    fill(255, 30 * s.life);
     circle(s.x, s.y, s.size * 3.5);
 
     if (s.life < 0.05) sparks.splice(i, 1);
@@ -97,39 +81,29 @@ function draw() {
   const cg = green(currentColor);
   const cb = blue(currentColor);
 
+  // particles
   for (const p of particles) {
-    // 바람(조금 더 강하게)
     const n = noise(p.seed, frameCount * 0.004);
-    const wind = map(n, 0, 1, -0.35, 0.35);
-    p.vx += wind * 0.03;
-    p.vy += -wind * 0.02;
+    const wind = map(n, 0, 1, -0.25, 0.25);
+    p.vx += wind * 0.02;
+    p.vy += -wind * 0.01;
 
-    // 끌림: 멀리서도 반응하도록 완충(분모)을 줄이고 영향 범위 넓힘
-    const dragging = touches.length > 0 || mouseIsPressed || hasClickAttractor;
+    // ✅ 끌림 반응 더 빠르게
+    const dragging = touches.length > 0 || mouseIsPressed;
     if (dragging) {
-      const dx = ax - p.x;
-      const dy = ay - p.y;
-
-      // ✅ 멀리 있는 애들도 빨리 움직이게: 거리 기반 감쇠를 부드럽게
-      const d = sqrt(dx * dx + dy * dy);
-      const falloff = 1 / (1 + d * 0.006); // d 커져도 0으로 안 떨어짐
-
+      const dx = mx - p.x;
+      const dy = my - p.y;
       const d2 = dx * dx + dy * dy;
-      const pull = 9000 / (d2 + 260); // 강하게
-      const k = 0.030 * falloff;
-
-      p.vx += dx * pull * k;
-      p.vy += dy * pull * k;
+      const pull = 2600 / (d2 + 900); // ← 여기 핵심
+      p.vx += dx * pull * 0.015;
+      p.vy += dy * pull * 0.015;
     }
 
-    // ✅ 마찰을 줄여서 덜 느려지게
-    p.vx *= 0.993;
-    p.vy *= 0.993;
+    p.vx *= 0.98;
+    p.vy *= 0.98;
 
     const sp = sqrt(p.vx * p.vx + p.vy * p.vy);
-
-    // ✅ 속도 상한 크게
-    const maxSp = 7.0;
+    const maxSp = 2.6;
     if (sp > maxSp) {
       p.vx = (p.vx / sp) * maxSp;
       p.vy = (p.vy / sp) * maxSp;
@@ -138,7 +112,80 @@ function draw() {
     p.x += p.vx;
     p.y += p.vy;
 
-    // 워프
     if (p.x < -10) p.x = width + 10;
     if (p.x > width + 10) p.x = -10;
     if (p.y < -10) p.y = height + 10;
+    if (p.y > height + 10) p.y = -10;
+
+    const glow = map(sp, 0, maxSp, 90, 230);
+
+    fill(cr, cg, cb, glow);
+    circle(p.x, p.y, p.r * 4.2);
+
+    fill(cr, cg, cb, 34);
+    circle(p.x, p.y, p.r * 10.5);
+  }
+
+  // 중심 가이드
+  if (touches.length > 0 || mouseIsPressed) {
+    noFill();
+    stroke(255, 26);
+    strokeWeight(1.2);
+    circle(mx, my, 85);
+  }
+}
+
+function mousePressed() {
+  targetColor = randomPastel();
+  addRipple(mouseX, mouseY);
+  addSparks(mouseX, mouseY);
+}
+
+function touchStarted() {
+  targetColor = randomPastel();
+  if (touches.length) {
+    addRipple(touches[0].x, touches[0].y);
+    addSparks(touches[0].x, touches[0].y);
+  }
+  return false;
+}
+
+function addRipple(x, y) {
+  ripples.push({
+    x, y,
+    radius: 0,
+    speed: 5.0, // ✅ 파동 속도 ↑
+    alpha: 95
+  });
+}
+
+function addSparks(x, y) {
+  const count = 12;
+  for (let i = 0; i < count; i++) {
+    const a = random(TWO_PI);
+    const sp = random(1.2, 3.2); // ✅ 스파클 속도 ↑
+    sparks.push({
+      x: x,
+      y: y,
+      vx: cos(a) * sp,
+      vy: sin(a) * sp,
+      life: random(0.7, 1.0),
+      size: random(1.2, 2.4)
+    });
+  }
+}
+
+function keyPressed() {
+  if (key === 'r' || key === 'R') initParticles();
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+function randomPastel() {
+  const r = random(150, 255);
+  const g = random(150, 255);
+  const b = random(150, 255);
+  return color(r, g, b);
+}
