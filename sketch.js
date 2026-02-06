@@ -26,6 +26,7 @@ function initParticles() {
 }
 
 function draw() {
+  drawingContext.filter = 'blur(6px)';
   background(7, 7, 10, 10);
 
   const mx = touches.length ? touches[0].x : mouseX;
@@ -43,6 +44,7 @@ function draw() {
     circle(rp.x, rp.y, rp.radius * 2);
 
     if (rp.alpha < 2) ripples.splice(i, 1);
+    drawingContext.filter = 'blur(6px)';
   }
 
   // particles
@@ -83,10 +85,10 @@ function draw() {
 
     const glow = map(sp, 0, maxSp, 70, 220);
     fill(red(currentColor), green(currentColor), blue(currentColor), glow);
-    circle(p.x, p.y, p.r * 2.2);
+    circle(p.x, p.y, p.r * 4.0);
 
     fill(red(currentColor), green(currentColor), blue(currentColor), 35);
-    circle(p.x, p.y, p.r * 6.0);
+    circle(p.x, p.y, p.r * 12.0);
   }
 
   if (touches.length > 0 || mouseIsPressed) {
